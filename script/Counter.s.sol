@@ -2,6 +2,8 @@
 pragma solidity ^0.8.13;
 
 import {Script, console} from "forge-std/Script.sol";
+import {Surl} from "surl/Surl.sol";
+
 
 contract CounterScript is Script {
     function setUp() public {}
