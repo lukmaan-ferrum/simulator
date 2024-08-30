@@ -1,4 +1,5 @@
 @solmate=lib/solmate/src/
 @std=lib/forge-std/src/
+@openzeppelin/=lib/openzeppelin-contracts/
 forge-std/=lib/forge-std/src/
 surl/=lib/surl/src/

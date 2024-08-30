@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {Surl} from "surl/Surl.sol";
 import {strings} from "solidity-stringutils/strings.sol";
 import {stdJson} from "forge-std/StdJson.sol";
-import {IERC20} from "forge-std/IERC20.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 contract OneInchTest is Test {
@@ -23,10 +23,11 @@ contract OneInchTest is Test {
 
     function testCall1Inch() public {
         bytes memory oneInchCalldata = _get1InchCalldata();
-        console.logBytes(oneInchCalldata);
+        oneInchCalldata = _modifyAndReplaceChunk(oneInchCalldata, 164);
 
         vm.startPrank(whale);
-
+        IERC20(usdc).approve(oneInch, 50 * 10 ** 6);
+        console.log("Approved");
         (bool success,) = oneInch.call(oneInchCalldata);
         console.log(success);
     }
@@ -65,4 +66,36 @@ contract OneInchTest is Test {
         assertEq(status, 200);
         return data;
     }
+
+    function _modifyAndReplaceChunk(bytes memory data, uint256 index) public pure returns (bytes memory) {
+        uint256 value;
+
+        // Extract the 32-byte chunk and convert it to a uint256
+        assembly {
+            let dataPtr := add(data, 32) // Get the pointer to the start of the bytes array's content
+            let chunkPtr := add(dataPtr, index) // Get the pointer to the target chunk
+            value := mload(chunkPtr) // Load the 32-byte chunk into the uint256 variable
+        }
+
+        console.log("Original value: ", value);
+        // Subtract 2% from the value
+        uint256 newValue = value * 98 / 100; // Equivalent to subtracting 2%
+        console.logBytes(data);
+
+        console.log("New value: ", newValue);
+
+        // Replace the original 32-byte chunk with the new value
+        assembly {
+            let dataPtr := add(data, 32) // Get the pointer to the start of the bytes array's content
+            let chunkPtr := add(dataPtr, index) // Get the pointer to the target chunk
+            mstore(chunkPtr, newValue) // Store the new value as a 32-byte chunk
+        }
+
+        console.logBytes(data);
+        return data;
+    }
 }
+
+// Compare the price. So get dstAmount from API response, calc price based on input and this
+// Then run simulation, and calc output price based on input and output
+// Compare the 2 prices
